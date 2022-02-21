@@ -1,0 +1,81 @@
+import java.util.*;
+import java.io.*;
+
+public class HuffmanTree {
+
+   private HuffmanNode tree;
+   
+   public HuffmanTree(int[] count) {
+      Queue<HuffmanNode> huffman = new PriorityQueue();
+      for (int i = 0; i < count.length; i++) {
+         if (count[i] > 0) {
+            huffman.add(new HuffmanNode(i, count[i], null, null));
+         }
+      }
+      huffman.add(new HuffmanNode(count.length, 1, null, null));
+      while (!huffman.isEmpty()) {
+         tree = huffman.remove();
+         if (!huffman.isEmpty()) {
+            HuffmanNode second = huffman.remove();
+            huffman.add(new HuffmanNode(-1, tree.freq + second.freq, tree, second));
+         }
+      }
+   }
+   
+   public HuffmanTree(Scanner input) {
+      while (input.hasNextLine()) {
+         int bit = Integer.parseInt(input.nextLine());
+         String code = input.nextLine();
+         tree = buildTree(bit, code);
+      }
+   }
+   
+   public HuffmanNode buildTree(int bit, String code) {
+      if (code.isEmpty()) {
+         return new HuffmanNode(bit, 0, null, null);
+      }else {
+         if (code.charAt(0) == '0') {
+            return new HuffmanNode(bit, -1, buildTree(bit, code.substring(1)), null);
+         }else {
+            return new HuffmanNode(bit, -1, null, buildTree(bit, code.substring(1)));
+         }
+      }
+   }
+   
+   public void decode(BitInputStream input, PrintStream output, int eof) {
+      int bit = 0;
+      while (bit != eof) {
+         bit = readTree(input, output, tree, eof);
+      }
+   }
+   
+   public int readTree(BitInputStream input, PrintStream output, HuffmanNode tree, int eof) {
+      if (tree.data == eof) { 
+         return eof;         
+      }else if (tree.data != -1) {
+         output.write(tree.data);
+         return tree.data;
+      }else {
+         if (input.readBit() == 1) {
+            return readTree(input, output, tree.right, eof);
+         }else {
+            return readTree(input, output, tree.left, eof);
+         }
+      }
+   }
+   
+   public void write(PrintStream output) {
+      writeHelper(output, tree, "");
+   }
+   
+   private void writeHelper(PrintStream output, HuffmanNode tree, String bit) {
+      if (tree.left == null && tree.right == null) {
+         output.println(tree.data);
+         output.println(bit);
+      }else {
+         writeHelper(output, tree.left, bit + "0");
+         writeHelper(output, tree.right, bit + "1");
+      }
+   }
+}
+
